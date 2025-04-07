@@ -1,227 +1,221 @@
-<!DOCTYPE html><html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hit24</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
+    body {
       margin: 0;
       padding: 0;
-    }
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: #f7f7fb;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f7fa;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-    .container {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      max-width: 500px;
-      width: 100%;
-    }
-    h1, h2, h3 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .cards {
-      display: flex;
       justify-content: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    .card {
-      background: #ffe3e3;
-      border-radius: 1rem;
-      padding: 1rem;
-      font-size: 1.5rem;
-      font-weight: bold;
-      width: 60px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: 2px solid #ddd;
-      border-radius: 0.75rem;
-      font-size: 1rem;
-    }
-    button {
-      padding: 0.75rem;
-      border: none;
-      border-radius: 0.75rem;
-      background: #7f5af0;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-bottom: 0.5rem;
-      width: 100%;
-    }
-    button:hover {
-      background: #6a48d7;
-    }
-    .scoreboard, .timer {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    @media (max-width: 600px) {
-      .cards {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-      .card {
-        width: 50px;
-        font-size: 1.2rem;
-      }
-    }
+      min-height: 100vh;
+      color: #333;
+    }.container {
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+  padding: 20px;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 2em;
+  color: #4a90e2;
+  margin-bottom: 10px;
+}
+
+#cards {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.card {
+  padding: 20px;
+  background-color: #e6f0fa;
+  border-radius: 12px;
+  font-size: 1.5em;
+  font-weight: bold;
+  width: 60px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+input {
+  padding: 10px;
+  font-size: 1em;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 80%;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 8px;
+  background-color: #4a90e2;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #357ab8;
+}
+
+#timer {
+  font-size: 1.2em;
+  margin-top: 10px;
+}
+
   </style>
-</head>
-<body>
+</head><body>
   <div class="container">
     <h1>Hit24</h1>
-    <div class="scoreboard">
-      <h3>Skor: <span id="score">0</span> | High Score: <span id="highScore">0</span></h3>
+    <div id="scoreboard">
+      <p>Score: <span id="score">0</span></p>
+      <p>High Score: <span id="highScore">0</span></p>
+      <p id="timer">Time left: 60s</p>
     </div>
-    <div class="timer">
-      <h3>Sisa Waktu: <span id="timer">60</span> detik</h3>
-    </div>
-    <div class="cards" id="cards"></div>
-    <input type="text" id="expression" placeholder="Masukkan ekspresi...">
-    <button onclick="submitExpression()">Submit</button>
+    <div id="cards"></div>
+    <input type="text" id="expression" placeholder="Enter your expression here">
+    <br>
+    <button onclick="submitAnswer()">Submit</button>
     <button onclick="skipLevel()">Skip</button>
   </div>  <script>
-    let cards = [];
-    let timer = 60;
-    let score = 0;
-    let highScore = localStorage.getItem("highScore") || 0;
-    document.getElementById("highScore").innerText = highScore;
+    let currentCards = []
+    let timer = 60
+    let interval
+    let score = 0
+    let highScore = localStorage.getItem("highScore") || 0
+    document.getElementById("highScore").textContent = highScore
 
     function generateCards() {
-      cards = Array.from({ length: 4 }, () => Math.floor(Math.random() * 10) + 1);
-      const cardContainer = document.getElementById("cards");
-      cardContainer.innerHTML = "";
-      cards.forEach(num => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerText = num;
-        cardContainer.appendChild(div);
-      });
+      currentCards = []
+      for (let i = 0; i < 4; i++) {
+        currentCards.push(Math.floor(Math.random() * 10) + 1)
+      }
+      document.getElementById("cards").innerHTML = currentCards.map(c => `<div class="card">${c}</div>`).join("")
     }
 
-    function evaluate24(expr) {
+    function validateUsage(expr, cards) {
+      const tokens = expr.match(/\d+/g)?.map(Number)
+      if (!tokens) return false
+      const used = {}
+      for (let n of tokens) {
+        let idx = cards.findIndex((c, i) => c === n && !used[i])
+        if (idx === -1) return false
+        used[idx] = true
+      }
+      return Object.keys(used).length === 4
+    }
+
+    function safeEval(expr) {
       try {
-        const result = eval(expr);
-        return Math.abs(result - 24) < 1e-6;
+        const func = new Function("return (" + expr + ")")
+        return func()
       } catch {
-        return false;
+        return null
       }
     }
 
-    function submitExpression() {
-      const expr = document.getElementById("expression").value;
-      if (evaluate24(expr)) {
-        score += timer * 100;
-        document.getElementById("score").innerText = score;
+    function submitAnswer() {
+      const expr = document.getElementById("expression").value
+      if (!validateUsage(expr, currentCards)) {
+        alert("Kamu harus menggunakan keempat angka yang diberikan, tanpa tambahan!")
+        return
+      }
+      const result = safeEval(expr)
+      if (Math.abs(result - 24) < 0.001) {
+        score += timer * 100
         if (score > highScore) {
-          highScore = score;
-          localStorage.setItem("highScore", score);
-          document.getElementById("highScore").innerText = score;
+          highScore = score
+          localStorage.setItem("highScore", highScore)
+          document.getElementById("highScore").textContent = highScore
         }
-        nextLevel();
+        timer = 60
+        generateCards()
+        document.getElementById("expression").value = ""
+        document.getElementById("score").textContent = score
       } else {
-        alert("Ekspresi salah atau tidak menghasilkan 24!");
-      }
-    }
-
-    function nextLevel() {
-      timer = 60;
-      generateCards();
-      document.getElementById("expression").value = "";
-    }
-
-    function skipLevel() {
-      const solvable = checkSolvable(cards);
-      if (solvable) {
-        alert("Level ini bisa diselesaikan. Kamu kalah!");
-        endGame();
-      } else {
-        nextLevel();
+        alert("Jawaban salah. Coba lagi!")
       }
     }
 
     function checkSolvable(cards) {
-      function permute(nums) {
-        if (nums.length === 1) return [nums];
-        const perms = [];
-        for (let i = 0; i < nums.length; i++) {
-          const rest = [...nums.slice(0, i), ...nums.slice(i + 1)];
-          for (const p of permute(rest)) {
-            perms.push([nums[i], ...p]);
+      function permute(arr) {
+        if (arr.length <= 1) return [arr]
+        const perms = []
+        for (let i = 0; i < arr.length; i++) {
+          const rest = [...arr.slice(0, i), ...arr.slice(i + 1)]
+          for (let p of permute(rest)) {
+            perms.push([arr[i], ...p])
           }
         }
-        return perms;
+        return perms
       }
 
-      function compute(a, b, op) {
-        switch (op) {
-          case '+': return a + b;
-          case '-': return a - b;
-          case '*': return a * b;
-          case '/': return b !== 0 ? a / b : null;
+      function ops(a, b) {
+        return [a + b, a - b, b - a, a * b, a / b, b / a]
+      }
+
+      const nums = cards
+      const perms = permute(nums)
+
+      for (let p of perms) {
+        const [a, b, c, d] = p
+        const results = new Set()
+
+        const exprs = [
+          (a + b) + (c + d),
+          (a + b) * (c + d),
+          ((a + b) + c) + d,
+          ((a * b) * c) * d,
+          (a * (b + c)) + d,
+          (a + b + c + d),
+          ((a + b) * c) + d,
+          (a + (b * (c + d))),
+          (a + b + c * d),
+          (a * b + c + d)
+        ]
+
+        for (let res of exprs) {
+          if (Math.abs(res - 24) < 0.001) return true
         }
       }
-
-      const ops = ['+', '-', '*', '/'];
-      const permutations = permute(cards);
-
-      for (const p of permutations) {
-        for (const op1 of ops) {
-          for (const op2 of ops) {
-            for (const op3 of ops) {
-              const exprs = [
-                `${p[0]}${op1}${p[1]}${op2}${p[2]}${op3}${p[3]}`,
-                `(${p[0]}${op1}${p[1]})${op2}${p[2]}${op3}${p[3]}`,
-                `${p[0]}${op1}(${p[1]}${op2}${p[2]})${op3}${p[3]}`,
-                `${p[0]}${op1}${p[1]}${op2}(${p[2]}${op3}${p[3]})`,
-                `(${p[0]}${op1}${p[1]})${op2}(${p[2]}${op3}${p[3]})`,
-              ];
-              for (const expr of exprs) {
-                try {
-                  if (Math.abs(eval(expr) - 24) < 1e-6) {
-                    return true;
-                  }
-                } catch {}
-              }
-            }
-          }
-        }
-      }
-      return false;
+      return false
     }
 
-    function endGame() {
-      alert(`Game Over! Skor akhir: ${score}`);
-      location.reload();
-    }
-
-    setInterval(() => {
-      if (timer > 0) {
-        timer--;
-        document.getElementById("timer").innerText = timer;
+    function skipLevel() {
+      if (checkSolvable(currentCards)) {
+        alert("Level ini bisa diselesaikan. Kamu kalah!")
+        clearInterval(interval)
+        location.reload()
       } else {
-        endGame();
+        timer = 60
+        generateCards()
+        document.getElementById('expression').value = ''
       }
-    }, 1000);
+    }
 
-    generateCards();
-  </script></body>
-</html>
+    function updateTimer() {
+      document.getElementById("timer").textContent = `Time left: ${timer}s`
+      timer--
+      if (timer < 0) {
+        alert("Waktu habis. Kamu kalah!")
+        clearInterval(interval)
+        location.reload()
+      }
+    }
+
+    generateCards()
+    interval = setInterval(updateTimer, 1000)
+  </script></body></html>
