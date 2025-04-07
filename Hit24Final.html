@@ -1,0 +1,227 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hit24</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f7f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .container {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: #ffe3e3;
+      border-radius: 1rem;
+      padding: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      width: 60px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: #7f5af0;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      width: 100%;
+    }
+    button:hover {
+      background: #6a48d7;
+    }
+    .scoreboard, .timer {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 600px) {
+      .cards {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .card {
+        width: 50px;
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hit24</h1>
+    <div class="scoreboard">
+      <h3>Skor: <span id="score">0</span> | High Score: <span id="highScore">0</span></h3>
+    </div>
+    <div class="timer">
+      <h3>Sisa Waktu: <span id="timer">60</span> detik</h3>
+    </div>
+    <div class="cards" id="cards"></div>
+    <input type="text" id="expression" placeholder="Masukkan ekspresi...">
+    <button onclick="submitExpression()">Submit</button>
+    <button onclick="skipLevel()">Skip</button>
+  </div>  <script>
+    let cards = [];
+    let timer = 60;
+    let score = 0;
+    let highScore = localStorage.getItem("highScore") || 0;
+    document.getElementById("highScore").innerText = highScore;
+
+    function generateCards() {
+      cards = Array.from({ length: 4 }, () => Math.floor(Math.random() * 10) + 1);
+      const cardContainer = document.getElementById("cards");
+      cardContainer.innerHTML = "";
+      cards.forEach(num => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerText = num;
+        cardContainer.appendChild(div);
+      });
+    }
+
+    function evaluate24(expr) {
+      try {
+        const result = eval(expr);
+        return Math.abs(result - 24) < 1e-6;
+      } catch {
+        return false;
+      }
+    }
+
+    function submitExpression() {
+      const expr = document.getElementById("expression").value;
+      if (evaluate24(expr)) {
+        score += timer * 100;
+        document.getElementById("score").innerText = score;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("highScore", score);
+          document.getElementById("highScore").innerText = score;
+        }
+        nextLevel();
+      } else {
+        alert("Ekspresi salah atau tidak menghasilkan 24!");
+      }
+    }
+
+    function nextLevel() {
+      timer = 60;
+      generateCards();
+      document.getElementById("expression").value = "";
+    }
+
+    function skipLevel() {
+      const solvable = checkSolvable(cards);
+      if (solvable) {
+        alert("Level ini bisa diselesaikan. Kamu kalah!");
+        endGame();
+      } else {
+        nextLevel();
+      }
+    }
+
+    function checkSolvable(cards) {
+      function permute(nums) {
+        if (nums.length === 1) return [nums];
+        const perms = [];
+        for (let i = 0; i < nums.length; i++) {
+          const rest = [...nums.slice(0, i), ...nums.slice(i + 1)];
+          for (const p of permute(rest)) {
+            perms.push([nums[i], ...p]);
+          }
+        }
+        return perms;
+      }
+
+      function compute(a, b, op) {
+        switch (op) {
+          case '+': return a + b;
+          case '-': return a - b;
+          case '*': return a * b;
+          case '/': return b !== 0 ? a / b : null;
+        }
+      }
+
+      const ops = ['+', '-', '*', '/'];
+      const permutations = permute(cards);
+
+      for (const p of permutations) {
+        for (const op1 of ops) {
+          for (const op2 of ops) {
+            for (const op3 of ops) {
+              const exprs = [
+                `${p[0]}${op1}${p[1]}${op2}${p[2]}${op3}${p[3]}`,
+                `(${p[0]}${op1}${p[1]})${op2}${p[2]}${op3}${p[3]}`,
+                `${p[0]}${op1}(${p[1]}${op2}${p[2]})${op3}${p[3]}`,
+                `${p[0]}${op1}${p[1]}${op2}(${p[2]}${op3}${p[3]})`,
+                `(${p[0]}${op1}${p[1]})${op2}(${p[2]}${op3}${p[3]})`,
+              ];
+              for (const expr of exprs) {
+                try {
+                  if (Math.abs(eval(expr) - 24) < 1e-6) {
+                    return true;
+                  }
+                } catch {}
+              }
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function endGame() {
+      alert(`Game Over! Skor akhir: ${score}`);
+      location.reload();
+    }
+
+    setInterval(() => {
+      if (timer > 0) {
+        timer--;
+        document.getElementById("timer").innerText = timer;
+      } else {
+        endGame();
+      }
+    }, 1000);
+
+    generateCards();
+  </script></body>
+</html>
